@@ -1,0 +1,10 @@
+[Unit]
+Description=Unload hawatri_sense at shutdown
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+ExecStop=/sbin/rmmod hawatri_sense 
+
+[Install]
+WantedBy=multi-user.target
