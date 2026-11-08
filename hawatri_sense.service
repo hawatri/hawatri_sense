@@ -1,10 +1,13 @@
 [Unit]
-Description=Unload hawatri_sense at shutdown
+Description=HawatriSense by Hawatri - load hawatri_sense and grant the hawatri_sense group access
+After=systemd-modules-load.service
 
 [Service]
 Type=oneshot
 RemainAfterExit=true
-ExecStop=/sbin/rmmod hawatri_sense 
+ExecStart=modprobe hawatri_sense
+ExecStart=systemd-tmpfiles --create hawatri_sense.conf
+ExecStop=rmmod hawatri_sense
 
 [Install]
 WantedBy=multi-user.target

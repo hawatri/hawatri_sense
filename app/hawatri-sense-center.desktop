@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=HawatriSense Center
+GenericName=Laptop Control Center
+Comment=Performance modes, fans and RGB lighting for Acer Predator/Nitro laptops - by Hawatri
+Exec=hawatri-sense-center
+Icon=hawatri-sense-center
+Terminal=false
+Categories=System;Settings;HardwareSettings;
+Keywords=fan;rgb;keyboard;performance;turbo;predator;nitro;hawatri;
+StartupWMClass=HawatriSense Center

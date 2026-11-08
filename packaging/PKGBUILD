@@ -1,0 +1,54 @@
+# Maintainer: Kia Hawatri <https://github.com/hawatri/HawatriSense>
+
+pkgname=hawatri-sense
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="HawatriSense - kernel module and control center for Acer Predator/Nitro laptops, by Hawatri"
+url="https://github.com/hawatri/HawatriSense"
+license=(GPL-2.0-or-later)
+arch=(any)
+depends=(dkms electron polkit)
+optdepends=('nvidia-utils: GPU temperature and usage on the dashboard')
+makedepends=(git)
+install=hawatri-sense.install
+source=("${pkgname}::git+${url}.git")
+sha256sums=(SKIP)
+
+package() {
+  cd "${srcdir}/${pkgname}"
+
+  # Module source for DKMS (pacman's dkms hook builds it for every installed kernel)
+  local _mod="${pkgdir}/usr/src/${pkgname}-${pkgver}"
+  install -Dm644 src/hawatri_sense.c "${_mod}/src/hawatri_sense.c"
+  install -Dm644 Makefile "${_mod}/Makefile"
+  sed "s/#MODULE_VERSION#/${pkgver}/" packaging/dkms.conf > "${_mod}/dkms.conf"
+
+  # Replace acer_wmi, load at boot, unload at shutdown
+  echo "blacklist acer_wmi" | install -Dm644 /dev/stdin "${pkgdir}/usr/lib/modprobe.d/hawatri_sense.conf"
+  echo "hawatri_sense" | install -Dm644 /dev/stdin "${pkgdir}/usr/lib/modules-load.d/hawatri_sense.conf"
+  install -Dm644 hawatri_sense.service "${pkgdir}/usr/lib/systemd/system/hawatri_sense.service"
+
+  # Group-writable sysfs controls for the hawatri_sense group
+  local _b=/sys/module/hawatri_sense/drivers/platform:acer-wmi/acer-wmi
+  {
+    for d in predator_sense nitro_sense; do
+      for f in fan_speed battery_limiter battery_calibration usb_charging backlight_timeout boot_animation_sound lcd_override; do
+        echo "z ${_b}/${d}/${f} 0660 root hawatri_sense"
+      done
+    done
+    echo "z ${_b}/four_zoned_kb/four_zone_mode 0660 root hawatri_sense"
+    echo "z ${_b}/four_zoned_kb/per_zone_mode 0660 root hawatri_sense"
+    echo "z /sys/firmware/acpi/platform_profile 0660 root hawatri_sense"
+  } | install -Dm644 /dev/stdin "${pkgdir}/usr/lib/tmpfiles.d/hawatri_sense.conf"
+  echo "g hawatri_sense - -" | install -Dm644 /dev/stdin "${pkgdir}/usr/lib/sysusers.d/hawatri_sense.conf"
+
+  # HawatriSense Center GUI (runs on the system electron, no bundled copy)
+  local _app="${pkgdir}/opt/hawatri-sense-center"
+  install -d "${_app}/assets"
+  install -m644 app/package.json app/main.js app/preload.js "${_app}/"
+  cp -r app/renderer "${_app}/"
+  install -m644 app/assets/* "${_app}/assets/"
+  install -Dm755 app/hawatri-sense-center.sh "${pkgdir}/usr/bin/hawatri-sense-center"
+  install -Dm644 app/hawatri-sense-center.desktop "${pkgdir}/usr/share/applications/hawatri-sense-center.desktop"
+  install -Dm644 app/assets/icon.svg "${pkgdir}/usr/share/icons/hicolor/scalable/apps/hawatri-sense-center.svg"
+}

@@ -1,0 +1,15 @@
+post_install() {
+  systemctl daemon-reload
+  systemctl enable hawatri_sense.service >/dev/null 2>&1
+  echo ">> HawatriSense by Hawatri installed."
+  echo ">> Add yourself to the control group, then reboot:"
+  echo ">>   sudo usermod -aG hawatri_sense \$USER"
+}
+
+post_upgrade() {
+  systemctl daemon-reload
+}
+
+pre_remove() {
+  systemctl disable hawatri_sense.service >/dev/null 2>&1 || true
+}

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  Acer WMI Laptop Extras
+ *  HawatriSense - by Kia Hawatri
+ *  Acer Predator / Nitro control driver (based on Acer WMI Laptop Extras)
  *
  *  Copyright (C) 2007-2009	Carlos Corbacho <carlos@strangeworlds.co.uk>
  *
@@ -38,7 +39,8 @@
  #include <linux/bitmap.h>
  
  MODULE_AUTHOR("Kia Hawatri");
- MODULE_DESCRIPTION("Acer Laptop WMI Extras Driver");
+ MODULE_DESCRIPTION("HawatriSense - Acer Predator/Nitro control driver by Hawatri");
+ MODULE_VERSION("1.0.0");
  MODULE_LICENSE("GPL");
  
  /*

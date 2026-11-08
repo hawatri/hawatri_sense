@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' blob: data:">
+  <title>HawatriSense</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-mode="balanced">
+  <div class="backdrop"><canvas id="backdrop-canvas"></canvas><div class="corridor"></div></div>
+
+  <!-- ===== Top bar ===== -->
+  <header class="topbar">
+    <svg class="logo" viewBox="0 0 40 40"><path d="M20 2 36 11v18L20 38 4 29V11z" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M13 12v16M27 12v16M13 20h14" stroke="currentColor" stroke-width="3.6"/></svg>
+    <nav class="tabs">
+      <button class="tab on" data-page="home">Home</button>
+      <button class="tab" data-page="scenario">Scenario</button>
+      <button class="tab" data-page="personal">Personal Settings</button>
+      <button class="tab" data-page="monitoring">Monitoring</button>
+      <button class="tab" data-page="about">About</button>
+    </nav>
+    <div class="top-right">
+      <span id="demo-badge" class="demo" hidden>DEMO</span>
+      <button class="win" data-win="min" title="Minimize"><svg viewBox="0 0 12 12"><path d="M1 6h10"/></svg></button>
+      <button class="win" data-win="max" title="Maximize"><svg viewBox="0 0 12 12"><rect x="1.5" y="1.5" width="9" height="9"/></svg></button>
+      <button class="win close" data-win="close" title="Close"><svg viewBox="0 0 12 12"><path d="M1 1l10 10M11 1 1 11"/></svg></button>
+    </div>
+  </header>
+
+  <div class="shell">
+    <main class="content">
+      <button class="dock-toggle" id="dock-toggle" title="Show / hide side panel"><svg viewBox="0 0 24 24"><path d="M3 4h10M3 9h10M3 14h10M3 19h10M17 6l5 6-5 6"/></svg></button>
+
+      <!-- ================= HOME ================= -->
+      <section class="page on" id="page-home">
+        <div class="home">
+          <div class="hframe hleft">
+            <div class="hatch top"></div>
+            <div class="ring-gauge big" id="g-gpu-freq">
+              <svg viewBox="0 0 220 220">
+                <circle class="rg-ticks" cx="110" cy="110" r="104"/>
+                <circle class="rg-outer" cx="110" cy="110" r="94"/>
+                <circle class="rg-track" cx="110" cy="110" r="80"/>
+                <circle class="rg-val" cx="110" cy="110" r="80"/>
+              </svg>
+              <div class="rg-text"><span class="rg-title">GPU</span><small>Frequency</small><b>--</b><small>MHz</small></div>
+            </div>
+            <div class="sparks">
+              <div class="spark"><canvas id="spark-gpu"></canvas><span>GPU Usage</span><b id="h-gpu-usage">--%</b></div>
+              <div class="spark"><canvas id="spark-cpu"></canvas><span>CPU Usage</span><b id="h-cpu-usage">--%</b></div>
+            </div>
+            <div class="feature">
+              <div class="feature-icon"><svg viewBox="0 0 48 48"><path d="M8 26h8l4-10 8 20 4-10h8"/><path d="M14 8h20a6 6 0 0 1 6 6v20a6 6 0 0 1-6 6H14a6 6 0 0 1-6-6V14a6 6 0 0 1 6-6z"/></svg></div>
+              <div><p>Hawatri Mech reacts to your system mode.</p><a data-goto="scenario">Change mode</a></div>
+            </div>
+          </div>
+
+          <div class="hcenter">
+            <div class="wordmark"><b>HAWATRI</b>SENSE</div>
+            <div class="sysmode"><small>System Mode</small><h1 id="mode-name">Balanced</h1></div>
+            <div class="mech-stage">
+              <canvas id="mech-canvas"></canvas>
+            </div>
+          </div>
+
+          <div class="hframe hright">
+            <div class="hatch top"></div>
+            <div class="vlabel">TEMPERATURE</div>
+            <div class="temp-gauges">
+              <div class="ring-gauge temp" id="g-gpu-temp"><svg viewBox="0 0 180 180"></svg><div class="rg-text"><b>--</b><small>°C</small></div><label>GPU</label></div>
+              <div class="ring-gauge temp" id="g-cpu-temp"><svg viewBox="0 0 180 180"></svg><div class="rg-text"><b>--</b><small>°C</small></div><label>CPU</label></div>
+              <div class="ring-gauge temp" id="g-sys-temp"><svg viewBox="0 0 180 180"></svg><div class="rg-text"><b>--</b><small>°C</small></div><label>System</label></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= SCENARIO ================= -->
+      <section class="page" id="page-scenario">
+        <div class="profile-bar">
+          <span>Scenario Profile</span>
+          <div class="select"><select id="profile-select-main"></select></div>
+        </div>
+        <button class="back" id="area-back" hidden><svg viewBox="0 0 24 24"><path d="M20 12H5M11 6l-6 6 6 6"/></svg>Area Lighting Control</button>
+        <nav class="subtabs">
+          <button class="subtab on" data-sub="mode">Mode</button>
+          <button class="subtab" data-sub="fan">Fan Control</button>
+          <button class="subtab" data-sub="light" id="subtab-light">RGB Lighting</button>
+        </nav>
+
+        <!-- Mode -->
+        <div class="sub on split" id="sub-mode">
+          <div class="panel">
+            <div class="hatch top"></div>
+            <h3 class="panel-title" id="power-title">AC Plugged In</h3>
+            <div class="tiles" id="mode-tiles"></div>
+            <div class="divider"></div>
+            <div class="speedos">
+              <div class="speedo-block">
+                <div class="speedo" id="sp-gpu"></div>
+                <div class="speedo-info"><h4>GPU</h4><small>Core Clock</small><b id="sp-gpu-clock">--</b><small>MHz</small><small>Usage</small><em id="sp-gpu-usage">--%</em></div>
+              </div>
+              <div class="vsep"></div>
+              <div class="speedo-block">
+                <div class="speedo" id="sp-cpu"></div>
+                <div class="speedo-info"><h4>CPU</h4><small>Core Clock</small><b id="sp-cpu-clock">--</b><small>MHz</small><small>Usage</small><em id="sp-cpu-usage">--%</em></div>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <div class="intro"><b>The introduction of Mode</b><span id="mode-intro"></span></div>
+          </div>
+          <div class="side-panels">
+            <div class="panel mini"><div class="hatch top"></div><p>Fan speed</p><a data-goto="scenario" data-sub="fan">Fan Control ›</a></div>
+            <div class="panel mini"><div class="hatch top"></div><p>Keyboard lighting</p><a data-goto="scenario" data-sub="light">RGB Lighting ›</a></div>
+          </div>
+        </div>
+
+        <!-- Fan -->
+        <div class="sub" id="sub-fan">
+          <div class="panel">
+            <div class="hatch top"></div>
+            <h3 class="panel-title">Fan Control</h3>
+            <div class="tiles center" id="fan-tiles"></div>
+            <div class="divider"></div>
+            <div class="fans">
+              <div class="fan-block" data-which="gpu"><svg class="swirl" viewBox="0 0 200 200"></svg><div class="fan-info"><h4>GPU</h4><b class="rpm">--</b><small>RPM</small></div></div>
+              <div class="vsep"></div>
+              <div class="fan-block" data-which="cpu"><svg class="swirl" viewBox="0 0 200 200"></svg><div class="fan-info"><h4>CPU</h4><b class="rpm">--</b><small>RPM</small></div></div>
+            </div>
+            <div class="custom-fans" id="custom-fans" hidden>
+              <div class="divider"></div>
+              <label class="slider"><span>GPU fan</span><input type="range" min="10" max="100" step="5" id="gpu-fan-slider"><b id="gpu-fan-val">60%</b></label>
+              <label class="slider"><span>CPU fan</span><input type="range" min="10" max="100" step="5" id="cpu-fan-slider"><b id="cpu-fan-val">50%</b></label>
+              <div class="actions"><button class="btn" id="fan-apply">Apply</button></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lighting -->
+        <div class="sub" id="sub-light">
+          <div class="light-layout">
+            <div class="panel">
+              <div class="hatch top"></div>
+              <div id="light-main">
+                <h3 class="panel-title">Lighting Control</h3>
+                <div class="tiles center small" id="light-tabs">
+                  <button class="tile on" data-light="effect"><span>Global</span></button>
+                  <button class="tile" data-light="zones"><span>Area</span></button>
+                </div>
+                <div class="divider"></div>
+                <div id="global-view">
+                  <div class="bright-row"><svg viewBox="0 0 24 24"><circle cx="12" cy="10" r="4"/><path d="M10 17h4"/></svg><input type="range" min="0" max="100" step="5" id="light-bright"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg></div>
+                  <div class="light-body">
+                    <div class="effects-col">
+                      <h5>Select Effect</h5>
+                      <div class="effects" id="effects"></div>
+                    </div>
+                    <div class="color-col">
+                      <div id="color-box"><h5>Color</h5><div id="global-picker"></div></div>
+                      <div id="speed-box"><h5>Speed</h5><input type="range" min="1" max="9" id="light-speed"></div>
+                      <div id="dir-box"><h5>Direction</h5><div class="dirs"><button data-dir="2" title="Right to left">⟵</button><button data-dir="1" title="Left to right">⟶</button></div></div>
+                    </div>
+                  </div>
+                </div>
+                <div id="area-intro" class="area-intro" hidden>
+                  <p>To customize the lighting effect of your unique style for<br>each LED zones.</p>
+                  <button class="pill narrow" id="to-area">To Area Control</button>
+                </div>
+              </div>
+              <div id="area-editor" hidden>
+                <div class="area-top">
+                  <div class="select narrow"><select id="zone-select"><option value="0">Zone 1</option><option value="1">Zone 2</option><option value="2">Zone 3</option><option value="3">Zone 4</option></select></div>
+                  <div class="bright-row"><svg viewBox="0 0 24 24"><circle cx="12" cy="10" r="4"/><path d="M10 17h4"/></svg><input type="range" min="0" max="100" step="5" id="area-bright"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg></div>
+                </div>
+                <div class="divider"></div>
+                <div class="area-body">
+                  <div class="kb-area"><svg id="keyboard" class="keyboard"></svg><div class="markers" id="markers"></div></div>
+                  <div class="vsep"></div>
+                  <div class="area-color"><h5>Color</h5><div id="area-picker"></div></div>
+                </div>
+              </div>
+            </div>
+            <div class="side-panels">
+              <div class="panel mini"><div class="hatch top"></div><a id="kb-timeout-link">Backlight off after 30 seconds <span id="kb-timeout-state"></span> ›</a></div>
+              <div class="panel mini"><div class="hatch top"></div><p>Reset lighting effect settings</p><button class="btn ghost small" id="light-reset">Reset</button></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= PERSONAL SETTINGS ================= -->
+      <section class="page" id="page-personal">
+        <h2 class="page-title">Personal Settings</h2>
+        <div class="personal">
+          <nav class="pnav" id="pnav">
+            <button class="on" data-sec="sec-battery">Battery &amp; Charge</button>
+            <button data-sec="sec-screen">Screen</button>
+            <button data-sec="sec-keyboard">Keyboard</button>
+            <button data-sec="sec-boot">System Boot Effect</button>
+          </nav>
+          <div class="psections" id="psections">
+            <div class="panel psec" id="sec-battery">
+              <div class="hatch top"></div>
+              <h3 class="sec-title"><svg viewBox="0 0 24 24"><rect x="6" y="4" width="12" height="17" rx="1"/><path d="M10 2h4M12 9v6M9 12h6"/></svg>Battery &amp; Charge</h3>
+              <h4>Battery Charge Mode</h4>
+              <label class="radio" data-key="battery_limiter" data-val="1"><i></i><span class="bat-ico">80</span><div><b>Optimized Battery Charging</b><small>[Recommended]<br>To reduce battery aging, charging capacity will be limited to 80%.</small></div></label>
+              <label class="radio" data-key="battery_limiter" data-val="0"><i></i><span class="bat-ico full"></span><div><b>Full Battery Charging</b><small>Charging to maximum capacity for longer mobile use.</small></div></label>
+              <div class="line"></div>
+              <h4>Battery Calibration</h4>
+              <p class="desc">Runs a full charge and discharge cycle to recalibrate the battery gauge. Keep the charger connected.</p>
+              <button class="switch" data-key="battery_calibration"></button>
+              <div class="line"></div>
+              <h4>Power-off USB Charger</h4>
+              <p class="desc">Charge mobile devices via the designated USB port even when the laptop is off or in Hibernate mode.</p>
+              <button class="switch" id="usb-switch"></button>
+              <h4 class="sub-h">Charge limit while using battery power</h4>
+              <p class="desc">On battery power, stop charging when the battery reaches:</p>
+              <div class="select narrow"><select id="usb-limit"><option value="10">10%</option><option value="20">20%</option><option value="30">30%</option></select></div>
+            </div>
+            <div class="panel psec" id="sec-screen">
+              <div class="hatch top"></div>
+              <h3 class="sec-title"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="1"/><path d="M8 20h8M12 16v4"/></svg>Screen</h3>
+              <h4>LCD Overdrive</h4>
+              <p class="desc">Faster pixel response time to reduce motion blur in games.</p>
+              <button class="switch" data-key="lcd_override"></button>
+            </div>
+            <div class="panel psec" id="sec-keyboard">
+              <div class="hatch top"></div>
+              <h3 class="sec-title"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="1"/><path d="M6 10h1M10 10h1M14 10h1M18 10h1M7 14h10"/></svg>Keyboard</h3>
+              <h4>Backlight off after 30 seconds</h4>
+              <p class="desc">Turn the keyboard backlight off when the keyboard is idle for 30 seconds.</p>
+              <button class="switch" data-key="backlight_timeout"></button>
+            </div>
+            <div class="panel psec" id="sec-boot">
+              <div class="hatch top"></div>
+              <h3 class="sec-title"><svg viewBox="0 0 24 24"><path d="M12 3v8M6.5 6.5a8 8 0 1 0 11 0"/></svg>System Boot Effect</h3>
+              <h4>Boot animation and sound</h4>
+              <p class="desc">Play the firmware logo animation and sound when the laptop starts.</p>
+              <button class="switch" data-key="boot_animation_sound"></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= MONITORING ================= -->
+      <section class="page" id="page-monitoring">
+        <h2 class="page-title">Monitoring</h2>
+        <div class="mon">
+          <div class="mon-col">
+            <div class="panel mon-card">
+              <div class="hatch top"></div>
+              <div class="mon-head"><div><small id="m-gpu-name">GPU</small><b>Temperature / Usage</b></div><h3>GPU</h3></div>
+              <div class="mon-graph"><canvas id="c-gpu"></canvas><div class="mon-vals"><b class="t" id="m-gpu-temp">--</b><small>°C</small><b class="u" id="m-gpu-usage">--</b><small>%</small></div></div>
+              <div class="mon-minmax" id="m-gpu-mm"></div>
+              <div class="mon-foot"><div><small>Fan speed</small><b id="m-gpu-fan">--</b><i>RPM</i></div><div><small>Frequency</small><b id="m-gpu-freq">--</b><i>MHz</i></div></div>
+            </div>
+            <div class="panel mon-card">
+              <div class="hatch top"></div>
+              <div class="mon-head"><div><small id="m-cpu-name">CPU</small><b>Temperature / Usage</b></div><h3>CPU</h3></div>
+              <div class="mon-graph"><canvas id="c-cpu"></canvas><div class="mon-vals"><b class="t" id="m-cpu-temp">--</b><small>°C</small><b class="u" id="m-cpu-usage">--</b><small>%</small></div></div>
+              <div class="mon-minmax" id="m-cpu-mm"></div>
+              <div class="mon-foot"><div><small>Fan speed</small><b id="m-cpu-fan">--</b><i>RPM</i></div><div><small>Frequency</small><b id="m-cpu-freq">--</b><i>MHz</i></div></div>
+            </div>
+          </div>
+          <div class="panel mon-card sys">
+            <div class="hatch top"></div>
+            <div class="mon-head"><div><b>Temperature</b></div><h3>System</h3></div>
+            <div class="mon-graph"><canvas id="c-sys"></canvas><div class="mon-vals"><b class="t" id="m-sys-temp">--</b><small>°C</small></div></div>
+            <div class="mon-minmax" id="m-sys-mm"></div>
+            <h5 class="grp">RAM</h5>
+            <div class="mon-foot"><div><small>Usage</small><b id="m-ram">--</b><i>GB</i> <span class="pct" id="m-ram-pct"></span></div></div>
+            <h5 class="grp">Ethernet</h5>
+            <div class="mon-foot"><div><small>Download</small><b id="m-eth-d">--</b><i>Kbps</i></div><div><small>Upload</small><b id="m-eth-u">--</b><i>Kbps</i></div></div>
+            <h5 class="grp">Wi-Fi</h5>
+            <div class="mon-foot"><div><small>Download</small><b id="m-wifi-d">--</b><i>Kbps</i></div><div><small>Upload</small><b id="m-wifi-u">--</b><i>Kbps</i></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= ABOUT ================= -->
+      <section class="page" id="page-about">
+        <h2 class="page-title">About</h2>
+        <div class="panel about">
+          <div class="hatch top"></div>
+          <svg class="about-logo" viewBox="0 0 40 40"><path d="M20 2 36 11v18L20 38 4 29V11z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M13 12v16M27 12v16M13 20h14" stroke="currentColor" stroke-width="3"/></svg>
+          <div class="wordmark small"><b>HAWATRI</b>SENSE</div>
+          <p>Version <span id="version">1.0.0</span> · A Hawatri product, made by <b>Kia Hawatri</b>.</p>
+          <p class="desc">Laptop: <span id="host">-</span> · Driver: <code>hawatri_sense</code> (<span id="family">-</span>)</p>
+          <p class="desc">Built on the open-source acer-wmi and Linuwu-Sense work. Licensed GPL-2.0. Not affiliated with or endorsed by Acer.</p>
+        </div>
+      </section>
+    </main>
+
+    <!-- ===== Right dock ===== -->
+    <aside class="dock" id="dock">
+      <div class="card">
+        <div class="card-head">Scenario Profile</div>
+        <div class="card-body">
+          <div class="select"><select id="profile-select"></select></div>
+          <button class="row" data-goto="scenario" data-sub="mode"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Mode<b id="d-mode">Balanced</b><i>›</i></button>
+          <button class="row" data-goto="scenario" data-sub="fan"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M12 10c0-4 1-7 4-7M14 12c4 0 7 1 7 4M12 14c0 4-1 7-4 7M10 12c-4 0-7-1-7-4"/></svg>Fan<b id="d-fan">Auto</b><i>›</i></button>
+          <button class="row" data-goto="scenario" data-sub="light" id="d-effect-row"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg>Effect<b id="d-effect">Wave</b><i>›</i></button>
+        </div>
+        <button class="card-foot" data-goto="scenario">Details <span>➜</span></button>
+      </div>
+      <div class="card">
+        <div class="card-head">Monitoring</div>
+        <div class="card-body">
+          <div class="mtiles">
+            <div class="mtile"><span>GPU</span><b id="t-gpu-u">--</b><i>%</i></div>
+            <div class="mtile"><span>GPU</span><b id="t-gpu-t">--</b><i>°C</i></div>
+            <div class="mtile"><span>CPU</span><b id="t-cpu-u">--</b><i>%</i></div>
+            <div class="mtile"><span>CPU</span><b id="t-cpu-t">--</b><i>°C</i></div>
+            <div class="mtile"><span>System</span><b id="t-sys-t">--</b><i>°C</i></div>
+            <div class="mtile"><span>RAM</span><b id="t-ram">--</b><i>%</i></div>
+          </div>
+        </div>
+        <button class="card-foot" data-goto="monitoring">Details <span>➜</span></button>
+      </div>
+      <div class="card">
+        <div class="card-head">Driver Status</div>
+        <div class="card-body center">
+          <p id="driver-status">Checking…</p>
+          <button class="pill" id="check-now">Check Now</button>
+        </div>
+        <button class="card-foot" data-goto="about">Details <span>➜</span></button>
+      </div>
+    </aside>
+  </div>
+
+  <div id="toasts"></div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

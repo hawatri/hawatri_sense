@@ -1,0 +1,3 @@
+node_modules/
+# Acer's PredatorSense robot is user-supplied only; never commit it
+fighter.glb

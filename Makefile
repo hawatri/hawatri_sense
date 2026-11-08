@@ -7,6 +7,9 @@ PWD   := $(shell pwd)
 MDIR  := /lib/modules/$(KVER)/kernel/drivers/platform/x86
 MODNAME := hawatri_sense
 REAL_USER := $(shell echo $${SUDO_USER:-$$(whoami)})
+APPDIR := /opt/hawatri-sense-center
+
+.PHONY: all clean install uninstall install-app uninstall-app
 
 all:
 	$(MAKE) -C $(KDIR) M=$(PWD) modules
@@ -76,9 +79,29 @@ install: all
 				grep -qxF "$$entry" $$conf_file || echo "$$entry" | sudo tee -a $$conf_file > /dev/null; \
 			done; \
 		fi; \
+		entry="f /sys/firmware/acpi/platform_profile 0660 root $(MODNAME)"; \
+		grep -qxF "$$entry" $$conf_file || echo "$$entry" | sudo tee -a $$conf_file > /dev/null; \
 		sudo systemd-tmpfiles --create $$conf_file; \
 	else \
 		echo "Warning: Could not detect predator_sense or nitro_sense in sysfs."; \
 	fi
 	@echo "Module $(MODNAME) installed and configured to load at boot."
+
+install-app:
+	@command -v electron >/dev/null || { echo "electron not found - install it first: sudo pacman -S electron"; exit 1; }
+	sudo rm -rf $(APPDIR)
+	sudo install -d $(APPDIR)/assets
+	sudo install -m 644 app/package.json app/main.js app/preload.js $(APPDIR)/
+	sudo cp -r app/renderer $(APPDIR)/
+	sudo install -m 644 app/assets/* $(APPDIR)/assets/
+	sudo install -m 755 app/hawatri-sense-center.sh /usr/bin/hawatri-sense-center
+	sudo install -m 644 app/hawatri-sense-center.desktop /usr/share/applications/hawatri-sense-center.desktop
+	sudo install -m 644 app/assets/icon.svg /usr/share/icons/hicolor/scalable/apps/hawatri-sense-center.svg
+	@echo "HawatriSense Center installed. Launch it from your app menu or run: hawatri-sense-center"
+
+uninstall-app:
+	sudo rm -rf $(APPDIR)
+	sudo rm -f /usr/bin/hawatri-sense-center /usr/share/applications/hawatri-sense-center.desktop
+	sudo rm -f /usr/share/icons/hicolor/scalable/apps/hawatri-sense-center.svg
+	@echo "HawatriSense Center removed."
 

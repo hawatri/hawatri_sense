@@ -1,0 +1,17 @@
+{
+  "name": "hawatri-sense-center",
+  "productName": "HawatriSense Center",
+  "version": "1.0.0",
+  "description": "HawatriSense Center - performance, fan and lighting control for Acer Predator/Nitro laptops on Linux, by Hawatri",
+  "main": "main.js",
+  "author": "Kia Hawatri",
+  "license": "GPL-2.0-or-later",
+  "homepage": "https://github.com/hawatri/HawatriSense",
+  "scripts": {
+    "start": "electron .",
+    "demo": "electron . --demo"
+  },
+  "devDependencies": {
+    "electron": "^37.2.3"
+  }
+}
